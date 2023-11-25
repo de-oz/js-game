@@ -40,8 +40,6 @@ function fieldRender() {
     }
 }
 
-fieldRender();
-
 function roomInaccessible(originY, originX, width, height) {
     for (var y = originY - 1; y < originY + height + 1; y++) {
         for (var x = originX - 1; x < originX + width + 1; x++) {
@@ -89,8 +87,6 @@ function generateRooms(minRooms, maxRooms, minRoomSize, maxRoomSize) {
             }
         }
     }
-
-    fieldRender();
 }
 
 function generatePassages(minPassages, maxPassages) {
@@ -127,10 +123,27 @@ function generatePassages(minPassages, maxPassages) {
 
         usedCoordinates.y.push(coordinate);
     }
+}
 
-    fieldRender();
+function generateObjects(objectClass, numberOfObjects) {
+    var y, x;
+
+    for (var k = 0; k < numberOfObjects; k++) {
+        do {
+            y = Math.floor(Math.random() * ROWS);
+            x = Math.floor(Math.random() * COLUMNS);
+        } while (map[y][x] !== tileClass);
+
+        map[y][x] = objectClass;
+    }
 }
 
 generatePassages(3, 5);
-
 generateRooms(5, 10, 3, 8);
+
+generateObjects(weaponClass, 2);
+generateObjects(hpClass, 10);
+generateObjects(playerClass, 1);
+generateObjects(enemyClass, 10);
+
+fieldRender();
