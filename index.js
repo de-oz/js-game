@@ -1,7 +1,6 @@
 "use strict";
-
-var FIELD_ROWS = 24;
-var FIELD_COLUMNS = 40;
+var ROWS = 24;
+var COLUMNS = 40;
 
 var field = document.querySelector(".field");
 
@@ -12,12 +11,12 @@ var enemyClass = "tile tileP";
 var weaponClass = "tile tileSW";
 var wallClass = "tile tileW";
 
-var map = new Array(FIELD_ROWS);
+var map = new Array(ROWS);
 
-for (var i = 0; i < FIELD_ROWS; i++) {
-    map[i] = new Array(FIELD_COLUMNS);
+for (var i = 0; i < ROWS; i++) {
+    map[i] = new Array(COLUMNS);
 
-    for (var j = 0; j < FIELD_COLUMNS; j++) {
+    for (var j = 0; j < COLUMNS; j++) {
         map[i][j] = wallClass;
     }
 }
@@ -25,8 +24,8 @@ for (var i = 0; i < FIELD_ROWS; i++) {
 function fieldRender() {
     field.innerHTML = "";
 
-    for (var i = 0; i < map.length; i++) {
-        for (var j = 0; j < map[i].length; j++) {
+    for (var i = 0; i < ROWS; i++) {
+        for (var j = 0; j < COLUMNS; j++) {
             var tile = document.createElement("div");
             tile.className = map[i][j];
 
@@ -43,19 +42,63 @@ function fieldRender() {
 
 fieldRender();
 
-var roomsNum = Math.floor(Math.random() * 6) + 5;
+function generateRooms(minRooms, maxRooms, minRoomSize, maxRoomSize) {
+    var roomsNum = Math.floor(Math.random() * (maxRooms - minRooms + 1)) + minRooms;
 
-for (var r = 0; r < roomsNum; r++) {
-    var roomWidth = Math.floor(Math.random() * 6) + 3;
-    var roomHeight = Math.floor(Math.random() * 6) + 3;
-    var originX = Math.floor(Math.random() * (map[0].length - roomWidth + 1));
-    var originY = Math.floor(Math.random() * (map.length - roomHeight + 1));
+    for (var k = 0; k < roomsNum; k++) {
+        var roomWidth = Math.floor(Math.random() * (maxRoomSize - minRoomSize + 1)) + minRoomSize;
+        var roomHeight = Math.floor(Math.random() * (maxRoomSize - minRoomSize + 1)) + minRoomSize;
+        var originX = Math.floor(Math.random() * (COLUMNS - roomWidth + 1));
+        var originY = Math.floor(Math.random() * (ROWS - roomHeight + 1));
 
-    for (var y = originY; y < originY + roomHeight; y++) {
-        for (var x = originX; x < originX + roomWidth; x++) {
-            map[y][x] = tileClass;
+        for (var y = originY; y < originY + roomHeight; y++) {
+            for (var x = originX; x < originX + roomWidth; x++) {
+                map[y][x] = tileClass;
+            }
         }
     }
+
+    fieldRender();
 }
 
-fieldRender();
+function generatePassages(minPassages, maxPassages) {
+    var usedCoordinates = { x: [], y: [] };
+
+    var passagesNumY = Math.floor(Math.random() * (maxPassages - minPassages + 1) + minPassages);
+    var passagesNumX = Math.floor(Math.random() * (maxPassages - minPassages + 1) + minPassages);
+
+    var isUsed = false;
+    var coordinate;
+
+    for (var j = 0; j < passagesNumY; j++) {
+        do {
+            coordinate = Math.floor(Math.random() * COLUMNS);
+            isUsed = usedCoordinates.x.indexOf(coordinate) !== -1;
+        } while (isUsed);
+
+        for (var y = 0; y < ROWS; y++) {
+            map[y][coordinate] = tileClass;
+        }
+
+        usedCoordinates.x.push(coordinate);
+    }
+
+    for (var i = 0; i < passagesNumX; i++) {
+        do {
+            coordinate = Math.floor(Math.random() * ROWS);
+            isUsed = usedCoordinates.y.indexOf(coordinate) !== -1;
+        } while (isUsed);
+
+        for (var x = 0; x < COLUMNS; x++) {
+            map[coordinate][x] = tileClass;
+        }
+
+        usedCoordinates.y.push(coordinate);
+    }
+
+    fieldRender();
+}
+
+generatePassages(3, 5);
+
+generateRooms(5, 10, 3, 8);
