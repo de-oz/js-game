@@ -42,16 +42,32 @@ function fieldRender() {
 
 fieldRender();
 
-function hasWalls(originY, originX, width, height) {
-    for (var y = originY; y < originY + height; y++) {
-        for (var x = originX; x < originX + width; x++) {
-            if (map[y][x] === wallClass) {
-                return true;
+function roomInaccessible(originY, originX, width, height) {
+    for (var y = originY - 1; y < originY + height + 1; y++) {
+        for (var x = originX - 1; x < originX + width + 1; x++) {
+            if ((y === originY - 1 || y === originY + height) && (x === originX - 1 || x === originX + width)) {
+                continue;
+            }
+
+            if (y >= 0 && y < ROWS && x >= 0 && x < COLUMNS && map[y][x] !== wallClass) {
+                return false;
             }
         }
     }
 
-    return false;
+    return true;
+}
+
+function noWalls(originY, originX, width, height) {
+    for (var y = originY; y < originY + height; y++) {
+        for (var x = originX; x < originX + width; x++) {
+            if (map[y][x] === wallClass) {
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
 
 function generateRooms(minRooms, maxRooms, minRoomSize, maxRoomSize) {
@@ -64,7 +80,8 @@ function generateRooms(minRooms, maxRooms, minRoomSize, maxRoomSize) {
             roomHeight = Math.floor(Math.random() * (maxRoomSize - minRoomSize + 1)) + minRoomSize;
             originX = Math.floor(Math.random() * (COLUMNS - roomWidth + 1));
             originY = Math.floor(Math.random() * (ROWS - roomHeight + 1));
-        } while (!hasWalls(originY, originX, roomWidth, roomHeight));
+        } while (roomInaccessible(originY, originX, roomWidth, roomHeight) ||
+            noWalls(originY, originX, roomWidth, roomHeight));
 
         for (var y = originY; y < originY + roomHeight; y++) {
             for (var x = originX; x < originX + roomWidth; x++) {
