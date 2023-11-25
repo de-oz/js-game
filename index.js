@@ -42,14 +42,29 @@ function fieldRender() {
 
 fieldRender();
 
+function hasWalls(originY, originX, width, height) {
+    for (var y = originY; y < originY + height; y++) {
+        for (var x = originX; x < originX + width; x++) {
+            if (map[y][x] === wallClass) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 function generateRooms(minRooms, maxRooms, minRoomSize, maxRoomSize) {
     var roomsNum = Math.floor(Math.random() * (maxRooms - minRooms + 1)) + minRooms;
+    var roomWidth, roomHeight, originX, originY;
 
     for (var k = 0; k < roomsNum; k++) {
-        var roomWidth = Math.floor(Math.random() * (maxRoomSize - minRoomSize + 1)) + minRoomSize;
-        var roomHeight = Math.floor(Math.random() * (maxRoomSize - minRoomSize + 1)) + minRoomSize;
-        var originX = Math.floor(Math.random() * (COLUMNS - roomWidth + 1));
-        var originY = Math.floor(Math.random() * (ROWS - roomHeight + 1));
+        do {
+            roomWidth = Math.floor(Math.random() * (maxRoomSize - minRoomSize + 1)) + minRoomSize;
+            roomHeight = Math.floor(Math.random() * (maxRoomSize - minRoomSize + 1)) + minRoomSize;
+            originX = Math.floor(Math.random() * (COLUMNS - roomWidth + 1));
+            originY = Math.floor(Math.random() * (ROWS - roomHeight + 1));
+        } while (!hasWalls(originY, originX, roomWidth, roomHeight));
 
         for (var y = originY; y < originY + roomHeight; y++) {
             for (var x = originX; x < originX + roomWidth; x++) {
