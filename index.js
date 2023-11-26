@@ -17,7 +17,7 @@ for (var i = 0; i < ROWS; i++) {
     map[i] = new Array(COLUMNS);
 
     for (var j = 0; j < COLUMNS; j++) {
-        map[i][j] = { type: wall, health: null };
+        map[i][j] = { type: wall, health: 0 };
     }
 }
 
@@ -28,7 +28,7 @@ function fieldRender() {
         for (var j = 0; j < COLUMNS; j++) {
             var tile = document.createElement("div");
 
-            if (map[i][j].health) {
+            if (map[i][j].health > 0) {
                 var healthBar = document.createElement("div");
                 healthBar.className = "health";
                 healthBar.style.width = map[i][j].health + "%";
@@ -222,10 +222,61 @@ function playerMove(key) {
         map[newY][newX].type = map[playerData.y][playerData.x].type;
         map[newY][newX].health = map[playerData.y][playerData.x].health;
         map[playerData.y][playerData.x].type = ground;
-        map[playerData.y][playerData.x].health = null;
+        map[playerData.y][playerData.x].health = 0;
 
         playerData.y = newY;
         playerData.x = newX;
+    }
+}
+
+function enemyMove() {
+    var y, dy, x, dx, steps, directions, randomDirection;
+
+    for (var i = 0; i < enemyPositions.length; i++) {
+        y = enemyPositions[i].y;
+        x = enemyPositions[i].x;
+
+        if (map[y][x].type !== enemy || map[y][x].health <= 0) {
+            continue;
+        }
+
+        steps = [
+            [y - 1, x],
+            [y + 1, x],
+            [y, x - 1],
+            [y, x + 1],
+        ];
+
+        directions = [];
+
+        for (var j = 0; j < steps.length; j++) {
+            dy = steps[j][0];
+            dx = steps[j][1];
+
+            if (validTile(dy, dx)) {
+                if (map[dy][dx].type === player) {
+                    directions.length = 0;
+                    break;
+                }
+                else if (map[dy][dx].type === ground) {
+                    directions.push([dy, dx]);
+                }
+            }
+        }
+
+        if (directions.length) {
+            randomDirection = directions[Math.floor(Math.random() * directions.length)];
+
+            dy = randomDirection[0];
+            dx = randomDirection[1];
+
+            map[dy][dx].type = enemy;
+            map[dy][dx].health = map[y][x].health;
+            map[y][x].type = ground;
+            map[y][x].health = 0;
+            enemyPositions[i].y = dy;
+            enemyPositions[i].x = dx;
+        }
     }
 }
 
@@ -250,7 +301,7 @@ function enemyAttack(playerDidStrike) {
 
         if (map[yCoordinate][xCoordinate].health <= 0) {
             map[yCoordinate][xCoordinate].type = ground;
-            map[yCoordinate][xCoordinate].health = null;
+            map[yCoordinate][xCoordinate].health = 0;
         }
     }
 
@@ -279,6 +330,7 @@ document.addEventListener("keydown", function (e) {
         else {
             playerMove(e.code);
         }
+        enemyMove();
         enemyAttack(e.code === "Space");
         fieldRender();
     }
