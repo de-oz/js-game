@@ -17,7 +17,7 @@ for (var i = 0; i < ROWS; i++) {
     map[i] = new Array(COLUMNS);
 
     for (var j = 0; j < COLUMNS; j++) {
-        map[i][j] = { type: wall };
+        map[i][j] = { type: wall, health: null };
     }
 }
 
@@ -28,7 +28,7 @@ function fieldRender() {
         for (var j = 0; j < COLUMNS; j++) {
             var tile = document.createElement("div");
 
-            if (map[i][j].hasOwnProperty("health")) {
+            if (map[i][j].health) {
                 var healthBar = document.createElement("div");
                 healthBar.className = "health";
                 healthBar.style.width = map[i][j].health + "%";
@@ -169,3 +169,43 @@ generateObjects(player, 1);
 generateObjects(enemy, 10);
 
 fieldRender();
+
+function handlePlayerMove(key) {
+    var newY = playerPosition.y;
+    var newX = playerPosition.x;
+
+    if (key === "KeyW") {
+        newY--;
+    }
+    else if (key === "KeyS") {
+        newY++;
+    }
+    else if (key === "KeyA") {
+        newX--;
+    }
+    else if (key === "KeyD") {
+        newX++;
+    }
+
+    if (newY >= 0 &&
+        newY < ROWS &&
+        newX >= 0 &&
+        newX < COLUMNS &&
+        map[newY][newX].type !== wall &&
+        map[newY][newX].type !== enemy) {
+        map[newY][newX].type = map[playerPosition.y][playerPosition.x].type;
+        map[newY][newX].health = map[playerPosition.y][playerPosition.x].health;
+        map[playerPosition.y][playerPosition.x].type = ground;
+        map[playerPosition.y][playerPosition.x].health = null;
+
+        playerPosition.y = newY;
+        playerPosition.x = newX;
+    }
+}
+
+document.addEventListener("keydown", function (e) {
+    if (e.code === "KeyW" || e.code === "KeyS" || e.code === "KeyA" || e.code === "KeyD") {
+        handlePlayerMove(e.code);
+        fieldRender();
+    }
+});
