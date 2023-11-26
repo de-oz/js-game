@@ -2,6 +2,21 @@
 var ROWS = 24;
 var COLUMNS = 40;
 
+var MIN_PASSAGES = 3;
+var MAX_PASSAGES = 5;
+var MIN_ROOMS = 5;
+var MAX_ROOMS = 10;
+var MIN_ROOM_SIZE = 3;
+var MAX_ROOM_SIZE = 8;
+
+var PLAYER_DAMAGE = 25;
+var NUMBER_OF_ENEMIES = 10;
+var ENEMY_DAMAGE = 10;
+var NUMBER_OF_HP = 10;
+var HP_POWER = 30;
+var NUMBER_OF_WEAPONS = 2;
+var WEAPON_BOOST = 15;
+
 var field = document.querySelector(".field");
 
 var ground = "tile";
@@ -22,14 +37,16 @@ for (var i = 0; i < ROWS; i++) {
 }
 
 function fieldRender() {
+    var tile, healthBar, topOffset, leftOffset;
+
     field.innerHTML = "";
 
     for (var i = 0; i < ROWS; i++) {
         for (var j = 0; j < COLUMNS; j++) {
-            var tile = document.createElement("div");
+            tile = document.createElement("div");
 
             if (map[i][j].health > 0) {
-                var healthBar = document.createElement("div");
+                healthBar = document.createElement("div");
                 healthBar.className = "health";
                 healthBar.style.width = map[i][j].health + "%";
 
@@ -38,8 +55,8 @@ function fieldRender() {
 
             tile.className = map[i][j].type;
 
-            var topOffset = i * 26 + "px";
-            var leftOffset = j * 26 + "px";
+            topOffset = i * 26 + "px";
+            leftOffset = j * 26 + "px";
 
             tile.style.top = topOffset;
             tile.style.left = leftOffset;
@@ -86,8 +103,9 @@ function noWalls(originY, originX, width, height) {
 }
 
 function generateRooms(minRooms, maxRooms, minRoomSize, maxRoomSize) {
-    var roomsNum = Math.floor(Math.random() * (maxRooms - minRooms + 1)) + minRooms;
     var roomWidth, roomHeight, originX, originY;
+
+    var roomsNum = Math.floor(Math.random() * (maxRooms - minRooms + 1)) + minRooms;
 
     for (var k = 0; k < roomsNum; k++) {
         do {
@@ -142,6 +160,12 @@ function generatePassages(minPassages, maxPassages) {
     }
 }
 
+generatePassages(MIN_PASSAGES, MAX_PASSAGES);
+generateRooms(MIN_ROOMS, MAX_ROOMS, MIN_ROOM_SIZE, MAX_ROOM_SIZE);
+
+var playerData = { y: null, x: null, damage: PLAYER_DAMAGE };
+var enemyPositions = [];
+
 function generateObjects(objectType, numberOfObjects) {
     var y, x;
 
@@ -164,27 +188,6 @@ function generateObjects(objectType, numberOfObjects) {
         }
     }
 }
-
-var MIN_PASSAGES = 3;
-var MAX_PASSAGES = 5;
-var MIN_ROOMS = 5;
-var MAX_ROOMS = 10;
-var MIN_ROOM_SIZE = 3;
-var MAX_ROOM_SIZE = 8;
-
-var PLAYER_DAMAGE = 25;
-var NUMBER_OF_ENEMIES = 10;
-var ENEMY_DAMAGE = 10;
-var NUMBER_OF_HP = 10;
-var HP_POWER = 30;
-var NUMBER_OF_WEAPONS = 2;
-var WEAPON_BOOST = 15;
-
-generatePassages(MIN_PASSAGES, MAX_PASSAGES);
-generateRooms(MIN_ROOMS, MAX_ROOMS, MIN_ROOM_SIZE, MAX_ROOM_SIZE);
-
-var playerData = { y: null, x: null, damage: PLAYER_DAMAGE };
-var enemyPositions = [];
 
 generateObjects(weapon, NUMBER_OF_WEAPONS);
 generateObjects(healthPotion, NUMBER_OF_HP);
@@ -284,6 +287,7 @@ function enemyAttack(playerDidStrike) {
     var y = playerData.y;
     var x = playerData.x;
     var damage = playerData.damage;
+    var dy, dx;
 
     var neighbors = [
         [y + 1, x],
@@ -306,8 +310,8 @@ function enemyAttack(playerDidStrike) {
     }
 
     for (var i = 0; i < neighbors.length; i++) {
-        var dy = neighbors[i][0];
-        var dx = neighbors[i][1];
+        dy = neighbors[i][0];
+        dx = neighbors[i][1];
 
         if (!validTile(dy, dx))
             continue;
@@ -323,15 +327,17 @@ function enemyAttack(playerDidStrike) {
 }
 
 document.addEventListener("keydown", function (e) {
-    if (e.code === "KeyW" || e.code === "KeyS" || e.code === "KeyA" || e.code === "KeyD" || e.code === "Space") {
-        if (e.code === "Space") {
-            e.preventDefault();
+    if (map[playerData.y][playerData.x].health > 0) {
+        if (e.code === "KeyW" || e.code === "KeyS" || e.code === "KeyA" || e.code === "KeyD" || e.code === "Space") {
+            if (e.code === "Space") {
+                e.preventDefault();
+            }
+            else {
+                playerMove(e.code);
+            }
+            enemyMove();
+            enemyAttack(e.code === "Space");
+            fieldRender();
         }
-        else {
-            playerMove(e.code);
-        }
-        enemyMove();
-        enemyAttack(e.code === "Space");
-        fieldRender();
     }
 });
