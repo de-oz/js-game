@@ -4,12 +4,12 @@ var COLUMNS = 40;
 
 var field = document.querySelector(".field");
 
-var tileClass = "tile";
-var playerClass = "tile tileE";
-var hpClass = "tile tileHP";
-var enemyClass = "tile tileP";
-var weaponClass = "tile tileSW";
-var wallClass = "tile tileW";
+var ground = "tile";
+var player = "tile tileP";
+var healthPotion = "tile tileHP";
+var enemy = "tile tileE";
+var weapon = "tile tileSW";
+var wall = "tile tileW";
 
 var map = new Array(ROWS);
 
@@ -17,7 +17,7 @@ for (var i = 0; i < ROWS; i++) {
     map[i] = new Array(COLUMNS);
 
     for (var j = 0; j < COLUMNS; j++) {
-        map[i][j] = wallClass;
+        map[i][j] = { type: wall };
     }
 }
 
@@ -27,7 +27,16 @@ function fieldRender() {
     for (var i = 0; i < ROWS; i++) {
         for (var j = 0; j < COLUMNS; j++) {
             var tile = document.createElement("div");
-            tile.className = map[i][j];
+
+            if (map[i][j].hasOwnProperty("health")) {
+                var healthBar = document.createElement("div");
+                healthBar.className = "health";
+                healthBar.style.width = map[i][j].health + "%";
+
+                tile.appendChild(healthBar);
+            }
+
+            tile.className = map[i][j].type;
 
             var topOffset = i * 26 + "px";
             var leftOffset = j * 26 + "px";
@@ -47,7 +56,7 @@ function roomInaccessible(originY, originX, width, height) {
                 continue;
             }
 
-            if (y >= 0 && y < ROWS && x >= 0 && x < COLUMNS && map[y][x] !== wallClass) {
+            if (y >= 0 && y < ROWS && x >= 0 && x < COLUMNS && map[y][x].type !== wall) {
                 return false;
             }
         }
@@ -59,7 +68,7 @@ function roomInaccessible(originY, originX, width, height) {
 function noWalls(originY, originX, width, height) {
     for (var y = originY; y < originY + height; y++) {
         for (var x = originX; x < originX + width; x++) {
-            if (map[y][x] === wallClass) {
+            if (map[y][x].type === wall) {
                 return false;
             }
         }
@@ -83,14 +92,14 @@ function generateRooms(minRooms, maxRooms, minRoomSize, maxRoomSize) {
 
         for (var y = originY; y < originY + roomHeight; y++) {
             for (var x = originX; x < originX + roomWidth; x++) {
-                map[y][x] = tileClass;
+                map[y][x].type = ground;
             }
         }
     }
 }
 
 function generatePassages(minPassages, maxPassages) {
-    var usedCoordinates = { x: [], y: [] };
+    var usedCoordinates = { y: [], x: [] };
 
     var passagesNumY = Math.floor(Math.random() * (maxPassages - minPassages + 1) + minPassages);
     var passagesNumX = Math.floor(Math.random() * (maxPassages - minPassages + 1) + minPassages);
@@ -105,7 +114,7 @@ function generatePassages(minPassages, maxPassages) {
         } while (isUsed);
 
         for (var y = 0; y < ROWS; y++) {
-            map[y][coordinate] = tileClass;
+            map[y][coordinate].type = ground;
         }
 
         usedCoordinates.x.push(coordinate);
@@ -118,32 +127,45 @@ function generatePassages(minPassages, maxPassages) {
         } while (isUsed);
 
         for (var x = 0; x < COLUMNS; x++) {
-            map[coordinate][x] = tileClass;
+            map[coordinate][x].type = ground;
         }
 
         usedCoordinates.y.push(coordinate);
     }
 }
 
-function generateObjects(objectClass, numberOfObjects) {
+function generateObjects(objectType, numberOfObjects) {
     var y, x;
 
     for (var k = 0; k < numberOfObjects; k++) {
         do {
             y = Math.floor(Math.random() * ROWS);
             x = Math.floor(Math.random() * COLUMNS);
-        } while (map[y][x] !== tileClass);
+        } while (map[y][x].type !== ground);
 
-        map[y][x] = objectClass;
+        map[y][x].type = objectType;
+
+        if (objectType === player) {
+            map[y][x].health = 100;
+            playerPosition.y = y;
+            playerPosition.x = x;
+        }
+        else if (objectType === enemy) {
+            map[y][x].health = 100;
+            enemyPositions.push({ y: y, x: x });
+        }
     }
 }
 
 generatePassages(3, 5);
 generateRooms(5, 10, 3, 8);
 
-generateObjects(weaponClass, 2);
-generateObjects(hpClass, 10);
-generateObjects(playerClass, 1);
-generateObjects(enemyClass, 10);
+var playerPosition = { y: null, x: null };
+var enemyPositions = [];
+
+generateObjects(weapon, 2);
+generateObjects(healthPotion, 10);
+generateObjects(player, 1);
+generateObjects(enemy, 10);
 
 fieldRender();
