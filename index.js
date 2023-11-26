@@ -147,8 +147,8 @@ function generateObjects(objectType, numberOfObjects) {
 
         if (objectType === player) {
             map[y][x].health = 100;
-            playerPosition.y = y;
-            playerPosition.x = x;
+            playerData.y = y;
+            playerData.x = x;
         }
         else if (objectType === enemy) {
             map[y][x].health = 100;
@@ -160,7 +160,7 @@ function generateObjects(objectType, numberOfObjects) {
 generatePassages(3, 5);
 generateRooms(5, 10, 3, 8);
 
-var playerPosition = { y: null, x: null };
+var playerData = { y: null, x: null, damage: 35 };
 var enemyPositions = [];
 
 generateObjects(weapon, 2);
@@ -171,8 +171,8 @@ generateObjects(enemy, 10);
 fieldRender();
 
 function handlePlayerMove(key) {
-    var newY = playerPosition.y;
-    var newX = playerPosition.x;
+    var newY = playerData.y;
+    var newX = playerData.x;
 
     if (key === "KeyW") {
         newY--;
@@ -193,19 +193,54 @@ function handlePlayerMove(key) {
         newX < COLUMNS &&
         map[newY][newX].type !== wall &&
         map[newY][newX].type !== enemy) {
-        map[newY][newX].type = map[playerPosition.y][playerPosition.x].type;
-        map[newY][newX].health = map[playerPosition.y][playerPosition.x].health;
-        map[playerPosition.y][playerPosition.x].type = ground;
-        map[playerPosition.y][playerPosition.x].health = null;
+        map[newY][newX].type = map[playerData.y][playerData.x].type;
+        map[newY][newX].health = map[playerData.y][playerData.x].health;
+        map[playerData.y][playerData.x].type = ground;
+        map[playerData.y][playerData.x].health = null;
 
-        playerPosition.y = newY;
-        playerPosition.x = newX;
+        playerData.y = newY;
+        playerData.x = newX;
+    }
+}
+
+function handleStrike() {
+    var y = playerData.y;
+    var x = playerData.x;
+    var damage = playerData.damage;
+
+    var neighbors = [
+        [y + 1, x],
+        [y + 1, x - 1],
+        [y + 1, x + 1],
+        [y - 1, x],
+        [y - 1, x - 1],
+        [y - 1, x + 1],
+        [y, x + 1],
+        [y, x - 1],
+    ];
+
+    for (var i = 0; i < neighbors.length; i++) {
+        var dy = neighbors[i][0];
+        var dx = neighbors[i][1];
+
+        if (map[dy][dx].type === enemy) {
+            map[dy][dx].health -= damage;
+
+            if (map[dy][dx].health <= 0) {
+                map[dy][dx].type = ground;
+                map[dy][dx].health = null;
+            }
+        }
     }
 }
 
 document.addEventListener("keydown", function (e) {
     if (e.code === "KeyW" || e.code === "KeyS" || e.code === "KeyA" || e.code === "KeyD") {
         handlePlayerMove(e.code);
+        fieldRender();
+    }
+    else if (e.code === "Space") {
+        handleStrike();
         fieldRender();
     }
 });
