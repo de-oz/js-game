@@ -49,6 +49,14 @@ function fieldRender() {
     }
 }
 
+function validTile(yCoordinate, xCoordinate) {
+    if (yCoordinate >= 0 && yCoordinate < ROWS && xCoordinate >= 0 && xCoordinate < COLUMNS) {
+        return true;
+    }
+
+    return false;
+}
+
 function roomInaccessible(originY, originX, width, height) {
     for (var y = originY - 1; y < originY + height + 1; y++) {
         for (var x = originX - 1; x < originX + width + 1; x++) {
@@ -56,7 +64,7 @@ function roomInaccessible(originY, originX, width, height) {
                 continue;
             }
 
-            if (y >= 0 && y < ROWS && x >= 0 && x < COLUMNS && map[y][x].type !== wall) {
+            if (validTile(y, x) && map[y][x].type !== wall) {
                 return false;
             }
         }
@@ -170,7 +178,7 @@ generateObjects(enemy, 10);
 
 fieldRender();
 
-function handlePlayerMove(key) {
+function playerMove(key) {
     var newY = playerData.y;
     var newX = playerData.x;
 
@@ -187,12 +195,7 @@ function handlePlayerMove(key) {
         newX++;
     }
 
-    if (newY >= 0 &&
-        newY < ROWS &&
-        newX >= 0 &&
-        newX < COLUMNS &&
-        map[newY][newX].type !== wall &&
-        map[newY][newX].type !== enemy) {
+    if (validTile(newY, newX) && map[newY][newX].type !== wall && map[newY][newX].type !== enemy) {
         map[newY][newX].type = map[playerData.y][playerData.x].type;
         map[newY][newX].health = map[playerData.y][playerData.x].health;
         map[playerData.y][playerData.x].type = ground;
@@ -203,7 +206,7 @@ function handlePlayerMove(key) {
     }
 }
 
-function handleStrike() {
+function enemyAttack(playerDidStrike) {
     var y = playerData.y;
     var x = playerData.x;
     var damage = playerData.damage;
@@ -219,28 +222,38 @@ function handleStrike() {
         [y, x - 1],
     ];
 
+    function updateHealth(yCoordinate, xCoordinate, damage) {
+        map[yCoordinate][xCoordinate].health -= damage;
+
+        if (map[yCoordinate][xCoordinate].health <= 0) {
+            map[yCoordinate][xCoordinate].type = ground;
+            map[yCoordinate][xCoordinate].health = null;
+        }
+    }
+
     for (var i = 0; i < neighbors.length; i++) {
         var dy = neighbors[i][0];
         var dx = neighbors[i][1];
 
-        if (map[dy][dx].type === enemy) {
-            map[dy][dx].health -= damage;
+        if (!validTile(dy, dx))
+            continue;
 
-            if (map[dy][dx].health <= 0) {
-                map[dy][dx].type = ground;
-                map[dy][dx].health = null;
-            }
+        if (playerDidStrike && map[dy][dx].type === enemy) {
+            updateHealth(dy, dx, damage);
+        }
+
+        if (map[dy][dx].type === enemy) {
+            updateHealth(y, x, 15);
         }
     }
 }
 
 document.addEventListener("keydown", function (e) {
-    if (e.code === "KeyW" || e.code === "KeyS" || e.code === "KeyA" || e.code === "KeyD") {
-        handlePlayerMove(e.code);
-        fieldRender();
-    }
-    else if (e.code === "Space") {
-        handleStrike();
+    if (e.code === "KeyW" || e.code === "KeyS" || e.code === "KeyA" || e.code === "KeyD" || e.code === "Space") {
+        if (e.code !== "Space") {
+            playerMove(e.code);
+        }
+        enemyAttack(e.code === "Space");
         fieldRender();
     }
 });
