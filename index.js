@@ -165,16 +165,31 @@ function generateObjects(objectType, numberOfObjects) {
     }
 }
 
-generatePassages(3, 5);
-generateRooms(5, 10, 3, 8);
+var MIN_PASSAGES = 3;
+var MAX_PASSAGES = 5;
+var MIN_ROOMS = 5;
+var MAX_ROOMS = 10;
+var MIN_ROOM_SIZE = 3;
+var MAX_ROOM_SIZE = 8;
 
-var playerData = { y: null, x: null, damage: 35 };
+var PLAYER_DAMAGE = 25;
+var NUMBER_OF_ENEMIES = 10;
+var ENEMY_DAMAGE = 10;
+var NUMBER_OF_HP = 10;
+var HP_POWER = 30;
+var NUMBER_OF_WEAPONS = 2;
+var WEAPON_BOOST = 15;
+
+generatePassages(MIN_PASSAGES, MAX_PASSAGES);
+generateRooms(MIN_ROOMS, MAX_ROOMS, MIN_ROOM_SIZE, MAX_ROOM_SIZE);
+
+var playerData = { y: null, x: null, damage: PLAYER_DAMAGE };
 var enemyPositions = [];
 
-generateObjects(weapon, 2);
-generateObjects(healthPotion, 10);
+generateObjects(weapon, NUMBER_OF_WEAPONS);
+generateObjects(healthPotion, NUMBER_OF_HP);
 generateObjects(player, 1);
-generateObjects(enemy, 10);
+generateObjects(enemy, NUMBER_OF_ENEMIES);
 
 fieldRender();
 
@@ -196,6 +211,14 @@ function playerMove(key) {
     }
 
     if (validTile(newY, newX) && map[newY][newX].type !== wall && map[newY][newX].type !== enemy) {
+        if (map[newY][newX].type === healthPotion) {
+            var restoredHealth = map[playerData.y][playerData.x].health + HP_POWER;
+            map[playerData.y][playerData.x].health = Math.min(restoredHealth, 100);
+        }
+        else if (map[newY][newX].type === weapon) {
+            playerData.damage += WEAPON_BOOST;
+        }
+
         map[newY][newX].type = map[playerData.y][playerData.x].type;
         map[newY][newX].health = map[playerData.y][playerData.x].health;
         map[playerData.y][playerData.x].type = ground;
@@ -243,14 +266,17 @@ function enemyAttack(playerDidStrike) {
         }
 
         if (map[dy][dx].type === enemy) {
-            updateHealth(y, x, 15);
+            updateHealth(y, x, ENEMY_DAMAGE);
         }
     }
 }
 
 document.addEventListener("keydown", function (e) {
     if (e.code === "KeyW" || e.code === "KeyS" || e.code === "KeyA" || e.code === "KeyD" || e.code === "Space") {
-        if (e.code !== "Space") {
+        if (e.code === "Space") {
+            e.preventDefault();
+        }
+        else {
             playerMove(e.code);
         }
         enemyAttack(e.code === "Space");
